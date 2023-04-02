@@ -1,2 +1,2 @@
 # acitx
-This is the tutorial of acix framework.
+This is the tutorial of acix-web.
