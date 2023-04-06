@@ -1,35 +1,18 @@
-use actix_web::{web, App, HttpResponse, HttpServer};
+use actix_web::{get, web, App, HttpServer, Result};
 
-// this function could be located in a different module
-fn scoped_config(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::resource("/test")
-            .route(web::get().to(|| async { HttpResponse::Ok().body("test") }))
-            .route(web::head().to(HttpResponse::MethodNotAllowed)),
-    );
-}
-
-// this function could be located in a different module
-fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::resource("/app")
-            .route(web::get().to(|| async { HttpResponse::Ok().body("app") }))
-            .route(web::head().to(HttpResponse::MethodNotAllowed)),
-    );
+/// extract path info from "/users/{user_id}/{friend}" url
+/// {user_id} - deserializes to a u32
+/// {friend} - deserializes to a String
+#[get("/users/{user_id}/{friend}")] // <- define path parameters
+async fn index(path: web::Path<(u32, String)>) -> Result<String> {
+    let (user_id, friend) = path.into_inner();
+    Ok(format!("Welcome {}, user_id {}!", friend, user_id))
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new()
-            .configure(config)
-            .service(web::scope("/api").configure(scoped_config))
-            .route(
-                "/",
-                web::get().to(|| async { HttpResponse::Ok().body("/") }),
-            )
-    })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+    HttpServer::new(|| App::new().service(index))
+        .bind(("127.0.0.1", 8080))?
+        .run()
+        .await
 }
